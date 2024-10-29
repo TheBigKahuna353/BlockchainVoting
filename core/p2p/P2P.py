@@ -11,6 +11,7 @@ class P2P:
         self.server = socketio.Server(async_mode='gevent')
         self.client = socketio.Client()
         self.app = socketio.WSGIApp(self.server)
+        self._server = None
 
         self.port = port
         self.peer_nodes = []
@@ -36,14 +37,20 @@ class P2P:
 
         if port != self.seed_node:
             self.peer_nodes.append(self.seed_node)
-            self.connect_to_network()
+            try:
+                self.connect_to_network()
+            except Exception as e:
+                print(f"Failed to connect to seed node", self.seed_node)
+                self.stop_server()
             
-
+    def stop_server(self):
+        # Stop the server
+        self._server.stop()
     
     def start_server(self):
         # Start the server to listen for incoming connections
-        server = pywsgi.WSGIServer(('', self.port), self.app)
-        server.serve_forever()
+        self._server = pywsgi.WSGIServer(('', self.port), self.app)
+        self._server.serve_forever()
     
     def broadcast_block(self, block_data):
         # Connect to each peer and send the block data
@@ -67,19 +74,4 @@ class P2P:
         self.client_connected = True
         print(f'Connecting to network through seed node: {self.seed_node}')
         self.client.emit('connect_to_network', self.port, callback=self.callback)
-
-
-instance1 = P2P(5000)
-instance2 = P2P(5001)
-
-# Test broadcast block
-block_data = {
-    'index': "1",
-    'timestamp': '01/01/2022',
-    'data': 'Block 1',
-    'previous_hash': '0',
-    'hash': '000000'
-}
-while instance1.peer_nodes == []: pass # wait for connection to seed node
-instance1.broadcast_block(block_data)
 
