@@ -9,6 +9,8 @@ this class does not handle mining, that is the job of the miner
 """
 class Blockchain:
 
+    POF_DIFFICULTY = 4
+
     def __init__(self):
         self.chain = []
         
@@ -32,10 +34,12 @@ class Blockchain:
         """
         previous_hash = self.chain[-1].hash 
         if previous_hash != block.previous_hash: #* 1
+            print("Invalid previous hash.")
             return False
         if not self.is_valid_hash(block): #* 2
             return False
-        if not block.verify_transactions(): #* 3
+        if not block.verify_data(self.chain): #* 3
+            print("Invalid data.")
             return False
         self.chain.append(block)
         return True
@@ -47,8 +51,7 @@ class Blockchain:
         hash in the block.
         """
         # Optional proof-of-work check: ensure hash has required leading zeros
-        difficulty = 4
-        if not block.hash.startswith("0" * difficulty):
+        if not block.hash.startswith("0" * self.POF_DIFFICULTY):
             print("Proof-of-work check failed.")
             return False
         
@@ -59,4 +62,5 @@ class Blockchain:
         
         return True
 
-     
+    def __len__(self):
+        return len(self.chain)

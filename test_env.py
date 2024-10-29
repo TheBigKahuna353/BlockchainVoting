@@ -1,5 +1,6 @@
 from Block import Block
 from Blockchain import Blockchain
+from Node import Miner, Node
 import time
 
 def test_block():
@@ -22,32 +23,40 @@ def test_blockchain():
     assert blockchain.chain[0].hash is not None
     assert blockchain.chain[0].nonce == 0
     assert blockchain.chain[0].hash_block() == blockchain.chain[0].hash
-    block = Block(1, time.time(), "Block 1", blockchain.chain[-1].hash)
-    assert blockchain.add_block(block) == True
-    assert len(blockchain.chain) == 2
-    assert blockchain.chain[-1].index == 1
-    assert blockchain.chain[-1].data == "Block 1"
-    assert blockchain.chain[-1].previous_hash == blockchain.chain[-2].hash
-    assert blockchain.chain[-1].hash is not None
-    assert blockchain.chain[-1].nonce == 0
-    assert blockchain.chain[-1].hash_block() == blockchain.chain[-1].hash
-    block = Block(2, time.time(), "Block 2", "0")
-    assert blockchain.add_block(block) == False
-    assert len(blockchain.chain) == 2
-    block = Block(2, time.time(), "Block 2", blockchain.chain[-1].hash)
-    assert blockchain.add_block(block) == True
-    assert len(blockchain.chain) == 3
-    assert blockchain.chain[-1].index == 2
-    assert blockchain.chain[-1].data == "Block 2"
-    assert blockchain.chain[-1].previous_hash == blockchain.chain[-2].hash
-    assert blockchain.chain[-1].hash is not None
-    assert blockchain.chain[-1].nonce == 0
-    assert blockchain.chain[-1].hash_block() == blockchain.chain[-1].hash
+
+def test_mine_block():
+    miner = Miner()
+    miner.blockchain.create_genesis_block()
+    transaction = {
+        "type": "vote",
+        "voter_hash": "hash",
+        "vote": "candidate"
+    }
+    miner.add_transaction(transaction)
+    assert miner.mine() == True
+
+
+def test_validating_incoming_block():
+    miner = Miner()
+    miner.blockchain.create_genesis_block()
+    peer = Node()
+    peer.blockchain.chain = miner.blockchain.chain.copy()
+    transaction = {
+        "type": "vote",
+        "voter_hash": "hash",
+        "vote": "candidate"
+    }
+    miner.add_transaction(transaction)
+    assert miner.mine() == True
+
+    assert peer.add_block(miner.blockchain.chain[-1]) == True
 
 
 def run_tests():
     test_block()
     test_blockchain()
+    test_mine_block()
+    test_validating_incoming_block()
     print("All tests pass.")
 
 if __name__ == "__main__":

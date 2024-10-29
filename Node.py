@@ -4,7 +4,8 @@ each node has a blockchain, transaction pool and a list of peers
 Miner class will inherit from this class
 """
 from Blockchain import Blockchain
-from Block import Block
+from Block import Block, VoteBlock, RegisterBlock
+import time
 
 class Node:
 
@@ -58,5 +59,23 @@ class Miner(Node):
         A function to mine a new block.
         This function will be called by the miner to mine a new block.
         """
-        # Implement your code here
-        return True
+        transaction = self.transaction_pool.pop(0)
+        previous_hash = self.blockchain.chain[-1].hash
+        if transaction["type"] == "vote":
+            block = VoteBlock(len(self.blockchain), time.time(), transaction, previous_hash)
+        elif transaction.type == "register":
+            block = RegisterBlock(len(self.blockchain), time.time(), transaction, previous_hash)
+        else:
+            return False
+        
+        # Proof-of-work
+        while not block.hash.startswith("0" * self.blockchain.POF_DIFFICULTY):
+            block.nonce += 1
+            block.hash = block.hash_block()
+        
+        if self.add_block(block):
+            # Broadcast block to peers
+            for peer in self.peers:
+                peer.send_block(block)
+            return True
+        return False
