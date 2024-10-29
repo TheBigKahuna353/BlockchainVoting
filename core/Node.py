@@ -4,7 +4,7 @@ each node has a blockchain, transaction pool and a list of peers
 Miner class will inherit from this class
 """
 from Blockchain import Blockchain
-from Block import Block, VoteBlock, RegisterBlock
+from Block import VoteBlock, RegisterBlock
 import time
 
 class Node:
