@@ -18,3 +18,9 @@ This project is designed for small-scale use, so it has a few limitations:
 - Potential Single Points of Failure: While decentralized, the network relies on a few nodes, which could impact reliability if any node goes offline.
 
 This prototype is a foundation for understanding blockchain voting mechanics, with room for future scaling improvements and enhanced robustness.
+
+
+# TODO
+## networking
+- abstract P2P into P2P and P2PNode (make P2P a standalone library?)
+- more error/timeout catching, get rid of while not self.server_connected to take into account server errors

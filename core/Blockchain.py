@@ -1,5 +1,5 @@
 import time
-from Block import Block
+from core.Block import Block
 
 """
 Blockchain class

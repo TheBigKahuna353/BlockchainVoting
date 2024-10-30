@@ -3,16 +3,16 @@ Node class for blockchain network
 each node has a blockchain, transaction pool and a list of peers
 Miner class will inherit from this class
 """
-from Blockchain import Blockchain
-from Block import VoteBlock, RegisterBlock
+from core.Blockchain import Blockchain
+from core.Block import VoteBlock, RegisterBlock, to_dict, from_dict
 import time
 
 class Node:
 
-    def __init__(self):
+    def __init__(self, p2p):
         self.blockchain = Blockchain()
         self.transaction_pool = []
-        self.peers = []
+        self.p2p = p2p
     
     def add_peer(self, peer):
         self.peers.append(peer)
@@ -24,6 +24,8 @@ class Node:
         self.transaction_pool.append(transaction)
     
     def add_block(self, block):
+        if isinstance(block, dict):
+            block = from_dict(block)
         if self.blockchain.add_block(block):
             # TODO remove transactions from pool that are in the block
             return True
@@ -51,8 +53,8 @@ class Node:
 
 class Miner(Node):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, p2p=None):
+        super().__init__(p2p)
     
     def mine(self):
         """
@@ -75,7 +77,5 @@ class Miner(Node):
         
         if self.add_block(block):
             # Broadcast block to peers
-            for peer in self.peers:
-                peer.send_block(block)
-            return True
+            return self.p2p.broadcast_block(to_dict(block))
         return False

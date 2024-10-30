@@ -51,6 +51,8 @@ def test_validating_incoming_block():
 
     assert peer.add_block(miner.blockchain.chain[-1]) == True
 
+def test_P2P():
+    pass
 
 def run_tests():
     test_block()

@@ -41,9 +41,11 @@ class VoteBlock(Block):
         for block in previous_blocks:
             if not isinstance(block, VoteBlock): continue
             if self.data['voter_hash'] in block.data['voter_hash']:
+                print("Duplicate voter ID.")
                 return False
         # Check for required fields
         if 'voter_hash' not in self.data or 'vote' not in self.data:
+            print("Missing required fields.")
             return False
         return True
 
@@ -66,3 +68,22 @@ class RegisterBlock(Block):
         if 'voter_hash' not in self.data:
             return False
         return True
+
+def to_dict(block):
+    return {
+        "index": block.index,
+        "timestamp": block.timestamp,
+        "data": block.data,
+        "previous_hash": block.previous_hash,
+        "nonce": block.nonce,
+        "hash": block.hash
+    }
+
+def from_dict(block_dict):
+    if "vote" in block_dict["data"]:
+        block = VoteBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previous_hash"])
+    else:
+        block = RegisterBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previous_hash"])
+    block.nonce = block_dict["nonce"]
+    block.hash = block_dict["hash"]
+    return block
