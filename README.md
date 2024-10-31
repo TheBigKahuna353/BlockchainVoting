@@ -8,7 +8,9 @@ Users register to receive a unique voter_id, which acts as their private identif
 
 # Security
 
-The blockchain structure ensures data integrity and resistance to tampering. Once a vote is recorded on a block, it cannot be altered, and the chain provides a transparent audit trail. Each node participates in verifying new transactions and blocks, promoting a decentralized approach to security.
+To ensure vote integrity and prevent tampering, each transaction (vote) on this blockchain system is secured using digital signatures. When users vote, their transaction includes a digital signature created with their unique private key, which authenticates their identity and verifies that they are authorized to submit the vote. Other nodes on the network can use the corresponding public key to validate this signature, confirming that the vote came from a legitimate source without revealing the voter's identity.
+
+Additionally, each block references the hash of the previous block, making it impossible to alter a past block without invalidating the entire chain. This structure ensures that the blockchain maintains a trustworthy and immutable history of votes while preserving voter anonymity.
 
 # Downfalls
 

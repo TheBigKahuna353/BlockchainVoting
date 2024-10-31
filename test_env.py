@@ -1,7 +1,7 @@
-from Block import Block
-from Blockchain import Blockchain
-from Node import Miner, Node
-import time
+from core.Block import Block, VoteBlock, RegisterBlock, from_dict, to_dict
+from core.Blockchain import Blockchain
+from core.Node import Miner, Node
+import time, sys
 
 def test_block():
     block = Block(0, time.time(), "Genesis Block", "0")
@@ -29,7 +29,7 @@ def test_mine_block():
     miner.blockchain.create_genesis_block()
     transaction = {
         "type": "vote",
-        "voter_hash": "hash",
+        "voter_id": "hash",
         "vote": "candidate"
     }
     miner.add_transaction(transaction)
@@ -39,11 +39,11 @@ def test_mine_block():
 def test_validating_incoming_block():
     miner = Miner()
     miner.blockchain.create_genesis_block()
-    peer = Node()
+    peer = Miner()
     peer.blockchain.chain = miner.blockchain.chain.copy()
     transaction = {
         "type": "vote",
-        "voter_hash": "hash",
+        "voter_id": "hash",
         "vote": "candidate"
     }
     miner.add_transaction(transaction)
@@ -51,14 +51,20 @@ def test_validating_incoming_block():
 
     assert peer.add_block(miner.blockchain.chain[-1]) == True
 
-def test_P2P():
-    pass
+def test_to_dict():
+    voteBlock = VoteBlock(0, time.time(), {"voter_id": "hash", "vote": "candidate"}, "0")
+    voteBlock.nonce = 23452
+    voteBlock.hash_block()
+    voteBlock_dict = to_dict(voteBlock)
+    print(sys.getsizeof(voteBlock_dict))
+
 
 def run_tests():
     test_block()
     test_blockchain()
     test_mine_block()
     test_validating_incoming_block()
+    test_to_dict()
     print("All tests pass.")
 
 if __name__ == "__main__":

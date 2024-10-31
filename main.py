@@ -29,7 +29,7 @@ miner.p2p = p2p
 starting_block_dict = {
     'index': 0, 
     'timestamp': 1730291248.4442232, 
-    'data': {"voter_hash": "0", "vote": "A"}, 
+    'data': {"voter_id": "0", "vote": "A"}, 
     'previous_hash': '0', 
     'nonce': 0, 
     'hash': '3c379288510f21b3f4fe2a6f39bc44013391744fbe4fbcd8cc3d89133208b668'}
@@ -71,9 +71,9 @@ while app.is_running:
     app.text(f"Blockchain len: {length}", 600, 150)
 
     if button.update():
-        voter_hash = int(miner.blockchain.chain[-1].data['voter_hash']) + 1
-        print(voter_hash)
-        miner.add_transaction({"type": "vote", "voter_hash": str(voter_hash), "vote": "A"})
+        voter_id = int(miner.blockchain.chain[-1].data['voter_id']) + 1
+        print(voter_id)
+        miner.add_transaction({"type": "vote", "voter_id": str(voter_id), "vote": "A"})
         print(miner.mine())
         print(sys.getsizeof(miner.blockchain.chain))
 

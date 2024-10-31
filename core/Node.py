@@ -77,9 +77,10 @@ class Miner(Node):
         
         if self.add_block(block):
             # Broadcast block to peers
-            if not self.p2p.broadcast_block(to_dict(block)):
-                # If broadcast fails, remove block from chain
-                self.blockchain.chain.pop()
-                return False
+            if self.p2p:
+                if not self.p2p.broadcast_block(to_dict(block)):
+                    # If broadcast fails, remove block from chain
+                    self.blockchain.chain.pop()
+                    return False
             return True
         return False

@@ -1,0 +1,5 @@
+cryptography
+gevent
+python-socketio
+pygame
+hooman

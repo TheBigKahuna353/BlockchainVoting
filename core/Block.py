@@ -28,44 +28,71 @@ class Block:
 
 
 class VoteBlock(Block):
+
+    """
+    data: {
+        "voter_id": str
+        "vote": str
+        "signature": str
+    }
+    """
+
     def __init__(self, index, timestamp, data, previous_hash):
         super().__init__(index, timestamp, data, previous_hash)
 
     def verify_data(self, previous_blocks):
         """
         Verify that the data in the block is valid.
-        Checking that each voter_hash is unique across previous blocks to prevent duplicate voting.
-        Ensuring each transaction has valid formatting (contains required fields like voter_hash and vote).
+        Checking that each voter_id is unique across previous blocks to prevent duplicate voting.
+        Check that the voter_id is registered before voting.
+        Ensuring each transaction has valid formatting (contains required fields like voter_id and vote).
         """
+        registered = False
         # Check for duplicate voter IDs
         for block in previous_blocks:
-            if not isinstance(block, VoteBlock): continue
-            if self.data['voter_hash'] in block.data['voter_hash']:
-                print("Duplicate voter ID.")
-                return False
+            if block.index == 0: continue   # Skip the genesis block
+            if isinstance(block, VoteBlock):
+                if self.data['voter_id'] in block.data['voter_id']:
+                    print("Duplicate voter ID.")
+                    return False
+            else:
+                if self.data['voter_id'] in block.data['voter_id']:
+                    registered = True
+        # Check if voter ID is registered
+        if not registered:
+            print("Voter ID not registered.")
+            return False
         # Check for required fields
-        if 'voter_hash' not in self.data or 'vote' not in self.data:
+        if 'voter_id' not in self.data or 'vote' not in self.data:
             print("Missing required fields.")
             return False
         return True
 
 class RegisterBlock(Block):
+
+    """
+    data: {
+        "voter_id": str
+        "public_key": str
+    }
+    """
+
     def __init__(self, index, timestamp, data, previous_hash):
         super().__init__(index, timestamp, data, previous_hash)
 
     def verify_data(self, previous_blocks):
         """
         Verify that the data in the block is valid.
-        Checking that each voter_hash is unique across previous blocks to prevent duplicate voting.
-        Ensuring each transaction has valid formatting (contains required fields like voter_hash and vote).
+        Checking that each voter_id is unique across previous blocks to prevent duplicate voting.
+        Ensuring each transaction has valid formatting (contains required fields like voter_id and vote).
         """
         # Check for duplicate voter IDs
         for block in previous_blocks:
             if not isinstance(block, RegisterBlock): continue
-            if self.data['voter_hash'] in block.data['voter_hash']:
+            if self.data['voter_id'] in block.data['voter_id']:
                 return False
         # Check for required fields
-        if 'voter_hash' not in self.data:
+        if 'voter_id' not in self.data:
             return False
         return True
 
