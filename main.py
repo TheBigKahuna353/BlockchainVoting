@@ -3,9 +3,10 @@ import pygame
 from core.p2p.P2P import P2P
 from core.Node import Miner
 from core.Block import from_dict
+from core.utils.encryption import generate_key_pair, sign_data
 import sys
 
-PORT = 5008
+PORT = 5006
 
 app = Hooman(800, 600)
 
@@ -26,6 +27,27 @@ miner = Miner()
 p2p = P2P(PORT, miner)
 miner.p2p = p2p
 
+# user variables
+private_key, public_key = generate_key_pair()
+voter_id = 0
+def create_transaction(voter_id, vote):
+    data = {
+        "voter_id": voter_id,
+        "vote": vote,
+        "type": "vote"
+    }
+    signature = sign_data(private_key, (voter_id + vote))
+    data["signature"] = signature
+    return data
+
+def create_register_transaction(voter_id):
+    data = {
+        "voter_id": voter_id,
+        "public_key": public_key,
+        "type": "register"
+    }
+    return data
+
 starting_block_dict = {
     'index': 0, 
     'timestamp': 1730291248.4442232, 
@@ -41,11 +63,17 @@ if not p2p.server_connected:
     print("Failed to connect to the seed node.")
     sys.exit(1)
 
-print(p2p)
 
 button = app.button(600, 350, 150, 50, "Mine Block", {
     "font_size": 18, 
     "background_color": (200, 200, 200), 
+    "hover_background_color": (150, 150, 150),
+    "curve": 0.5,
+    "enlarge": True})
+
+button2 = app.button(600, 450, 150, 50, "Register", {
+    "font_size": 18,
+    "background_color": (200, 200, 200),
     "hover_background_color": (150, 150, 150),
     "curve": 0.5,
     "enlarge": True})
@@ -71,9 +99,15 @@ while app.is_running:
     app.text(f"Blockchain len: {length}", 600, 150)
 
     if button.update():
-        voter_id = int(miner.blockchain.chain[-1].data['voter_id']) + 1
         print(voter_id)
-        miner.add_transaction({"type": "vote", "voter_id": str(voter_id), "vote": "A"})
+        miner.add_transaction(create_transaction(str(voter_id), "A"))
+        print(miner.mine())
+        print(sys.getsizeof(miner.blockchain.chain))
+
+    if button2.update():
+        voter_id += 1
+        print(voter_id)
+        miner.add_transaction(create_register_transaction(str(voter_id)))
         print(miner.mine())
         print(sys.getsizeof(miner.blockchain.chain))
 

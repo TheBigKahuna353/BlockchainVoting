@@ -1,4 +1,5 @@
 import hashlib as hasher
+from core.utils.encryption import verify_signature
 
 class Block:
     def __init__(self, index, timestamp, data, previous_hash):
@@ -48,6 +49,7 @@ class VoteBlock(Block):
         Ensuring each transaction has valid formatting (contains required fields like voter_id and vote).
         """
         registered = False
+        public_key = None
         # Check for duplicate voter IDs
         for block in previous_blocks:
             if block.index == 0: continue   # Skip the genesis block
@@ -58,6 +60,7 @@ class VoteBlock(Block):
             else:
                 if self.data['voter_id'] in block.data['voter_id']:
                     registered = True
+                    public_key = block.data['public_key']
         # Check if voter ID is registered
         if not registered:
             print("Voter ID not registered.")
@@ -65,6 +68,10 @@ class VoteBlock(Block):
         # Check for required fields
         if 'voter_id' not in self.data or 'vote' not in self.data:
             print("Missing required fields.")
+            return False
+        # Check for valid signature
+        if not verify_signature(public_key, self.data['signature'], self.data['voter_id'] + self.data['vote']):
+            print("Invalid signature.")
             return False
         return True
 

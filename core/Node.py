@@ -65,7 +65,7 @@ class Miner(Node):
         previous_hash = self.blockchain.chain[-1].hash
         if transaction["type"] == "vote":
             block = VoteBlock(len(self.blockchain), time.time(), transaction, previous_hash)
-        elif transaction.type == "register":
+        elif transaction["type"] == "register":
             block = RegisterBlock(len(self.blockchain), time.time(), transaction, previous_hash)
         else:
             return False
