@@ -5,7 +5,7 @@ from core.Node import Miner
 from core.Block import from_dict
 import sys
 
-PORT = 5001
+PORT = 5008
 
 app = Hooman(800, 600)
 
@@ -20,10 +20,11 @@ app.flip_display()
 app.event_loop()
 
 # Start the P2P Network
-# This will start the server on the specified port, as well as connect to the seed node
-p2p = P2P(PORT)
 
-miner = Miner(p2p)
+miner = Miner()
+# This will start the server on the specified port, as well as connect to the seed node
+p2p = P2P(PORT, miner)
+miner.p2p = p2p
 
 starting_block_dict = {
     'index': 0, 
@@ -34,8 +35,7 @@ starting_block_dict = {
     'hash': '3c379288510f21b3f4fe2a6f39bc44013391744fbe4fbcd8cc3d89133208b668'}
 
 starting_block = from_dict(starting_block_dict)
-miner.blockchain.chain.append(starting_block)
-p2p.node = miner
+miner.blockchain.set_genesis_block(starting_block)
 
 if not p2p.server_connected:
     print("Failed to connect to the seed node.")
@@ -75,6 +75,7 @@ while app.is_running:
         print(voter_hash)
         miner.add_transaction({"type": "vote", "voter_hash": str(voter_hash), "vote": "A"})
         print(miner.mine())
+        print(sys.getsizeof(miner.blockchain.chain))
 
     app.flip_display()
     app.event_loop()

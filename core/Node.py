@@ -39,7 +39,7 @@ class Node:
         """
         # Implement your code here
         return True
-    
+
     def sync_chain(self):
         """
         A function to sync the chain with peers.
@@ -77,5 +77,9 @@ class Miner(Node):
         
         if self.add_block(block):
             # Broadcast block to peers
-            return self.p2p.broadcast_block(to_dict(block))
+            if not self.p2p.broadcast_block(to_dict(block)):
+                # If broadcast fails, remove block from chain
+                self.blockchain.chain.pop()
+                return False
+            return True
         return False

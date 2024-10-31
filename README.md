@@ -24,3 +24,5 @@ This prototype is a foundation for understanding blockchain voting mechanics, wi
 ## networking
 - abstract P2P into P2P and P2PNode (make P2P a standalone library?)
 - more error/timeout catching, get rid of while not self.server_connected to take into account server errors
+
+## Blockchain

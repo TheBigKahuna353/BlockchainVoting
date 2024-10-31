@@ -1,5 +1,6 @@
 import time
 from core.Block import Block
+from core.Block import VoteBlock, RegisterBlock, to_dict, from_dict
 
 """
 Blockchain class
@@ -23,6 +24,27 @@ class Blockchain:
         """
         genesis_block = Block(0, time.time(), "Genesis Block", "0")
         self.chain.append(genesis_block)
+
+    def set_genesis_block(self, block):
+        """
+        A function to set the genesis block.
+        """
+        if block.index != 0 or block.previous_hash != "0":
+            print("Invalid genesis block.")
+            return False
+        if len(self.chain) == 0:
+            self.chain.append(block)
+            return True
+        elif len(self.chain) == 1:
+            self.chain[0] = block
+            return True
+        else:
+            if self.chain[1].previous_hash == block.hash:
+                self.chain[0] = block
+                return True
+            else:
+                print("Invalid genesis block. Previous hash does not match.")
+                return False
 
     def add_block(self, block):
         """
@@ -64,3 +86,9 @@ class Blockchain:
 
     def __len__(self):
         return len(self.chain)
+    
+    def to_dict(self):
+        return [to_dict(block) for block in self.chain]
+    
+    def from_dict(self, chain):
+        self.chain = [from_dict(block) for block in chain]

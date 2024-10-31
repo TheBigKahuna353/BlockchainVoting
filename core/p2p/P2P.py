@@ -27,7 +27,6 @@ class P2P:
         self.client_connected = False
         self.server_connected = False
         self.response = None
-        self.connecting = True
 
         self.error = False
 
@@ -50,7 +49,7 @@ class P2P:
             print(f'SERVER: {self.port}: Node connected to network: {port}')
             self.share_peers(port)
             self.peer_nodes.append(port)
-            return self.peer_nodes[:-1]
+            return self.peer_nodes[:-1], self.node.blockchain.to_dict() if self.node else None
         
         @self.server.event
         def share_peers(sid, peers):
@@ -59,6 +58,7 @@ class P2P:
                 self.peer_nodes.extend(peers)
             else:
                 self.peer_nodes.append(peers)
+            return True
         
         # ----------------------------------------------------------------
 
@@ -106,9 +106,10 @@ class P2P:
         # Connect to each peer and send the block data
         for node_address in self.peer_nodes:
             passed = self.send_to(node_address, 'receive_block', block_data)
-            if passed != "Accepted":
-                print(f"Failed to send block to {node_address}: {passed}")
+            if passed != "Accepted" and passed != True:
+                print(f"Failed to send block to {node_address}: {passed}, {type(passed)}")
                 return False
+        return True
                 
     
     def __str__(self):
@@ -118,9 +119,12 @@ class P2P:
         self.response = args[0]
         self.client_connected = False 
 
-    def connecting_callback(self, peers):
+    def connecting_callback(self, peers, chain):
         print(f"Connected to network: {peers}")
         self.peer_nodes.extend(peers)
+        if self.node:
+            self.node.blockchain.from_dict(chain)
+            print(f"Blockchain synced with network: {len(self.node.blockchain)}")
         self.client_connected = False
 
     def connect_to_network(self):
@@ -131,6 +135,7 @@ class P2P:
             self.client.connect(f'http://localhost:{self.seed_node}')
             self.client.emit('connect_to_network', self.port, callback=self.connecting_callback)
             while self.client_connected: pass
+            self.client.disconnect()
             return True
         except ConnectionError as e:
             print(f"Failed to connect to seed node")
@@ -152,7 +157,7 @@ class P2P:
             self.client.emit(event, data, callback=self.callback)
             while self.client_connected: pass
             self.client.disconnect()
-            return self.response if self.response else "Accepted"
+            return self.response if self.response != True else "Accepted"
         except ConnectionError as e:
             print(f"Failed to connect to {node_address}")
             self.client_connected = False
