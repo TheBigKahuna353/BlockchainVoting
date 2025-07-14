@@ -7,6 +7,7 @@ Blockchain class
 this holds just the chain (eg list of Blocks from Block.py)
 this class will have methods to add blocks to the chain, validate the chain, etc
 this class does not handle mining, that is the job of the miner
+NEW: this class will also hold a hashmap of users ids to public keys
 """
 class Blockchain:
 
@@ -14,6 +15,7 @@ class Blockchain:
 
     def __init__(self):
         self.chain = []
+        self.users = {}
         
     
     def create_genesis_block(self):
@@ -60,10 +62,11 @@ class Blockchain:
             return False
         if not self.is_valid_hash(block): #* 2
             return False
-        if not block.verify_data(self.chain): #* 3
+        if not block.verify_data(self.chain, self.users): #* 3
             print("Invalid data.")
             return False
         self.chain.append(block)
+        self.update_users_from_last_block()
         return True
 
     def is_valid_hash(self, block):
@@ -92,3 +95,14 @@ class Blockchain:
     
     def from_dict(self, chain):
         self.chain = [from_dict(block) for block in chain]
+        self.update_users()
+
+    def update_users(self):
+        for block in self.chain:
+            if isinstance(block, RegisterBlock):
+                self.users[block.data['voter_id']] = block.data['public_key']
+    
+    def update_users_from_last_block(self):
+        block = self.chain[-1]
+        if isinstance(block, RegisterBlock):
+            self.users[block.data['voter_id']] = block.data['public_key']

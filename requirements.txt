@@ -3,3 +3,6 @@ gevent
 python-socketio
 pygame
 hooman
+mnemonic
+pyperclip
+websocket-client

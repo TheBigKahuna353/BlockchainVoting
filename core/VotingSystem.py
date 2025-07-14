@@ -1,4 +1,4 @@
-from Block import VoteBlock
+from core.Block import VoteBlock
 
 class VotingSystem:
 
@@ -24,7 +24,7 @@ class VotingSystem:
         return self.votes
 
     def get_vote_count(self):
-        return len(x for x in self.votes.values())
+        return len([x for x in self.votes.values()])
 
     def get_vote_count_for_candidate(self, candidate):
         return self.votes[candidate]

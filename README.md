@@ -18,13 +18,21 @@ This project is designed for small-scale use, so it has a few limitations:
 
 - Limited Scalability: Currently, only one user registration can be processed at a time. Each registration requires network-wide block validation, so if another user tries to register while a registration block is still being mined, their registration attempt will fail. This limitation would become more problematic in larger networks.
 - Potential Single Points of Failure: While decentralized, the network relies on a few nodes, which could impact reliability if any node goes offline.
+- Currently there is potential for users to register multiple times, to solve this, a system that verifies identities upon registering and stores registered names to stop people registering with that name again.
 
 This prototype is a foundation for understanding blockchain voting mechanics, with room for future scaling improvements and enhanced robustness.
 
+
+# How to use
+
+Start the app and press register. This will give you your voter id (your username), and your mnuemonic, which is your password, you can use this for future logins
+To add a vote, 
 
 # TODO
 ## networking
 - abstract P2P into P2P and P2PNode (make P2P a standalone library?)
 - more error/timeout catching, get rid of while not self.server_connected to take into account server errors
-
+- login
+- show votes
+- be able to send purposely incorrect block to other nodes
 ## Blockchain

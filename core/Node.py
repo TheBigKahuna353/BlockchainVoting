@@ -5,7 +5,7 @@ Miner class will inherit from this class
 """
 from core.Blockchain import Blockchain
 from core.Block import VoteBlock, RegisterBlock, to_dict, from_dict
-import time
+import time, random
 
 class Node:
 
@@ -28,6 +28,7 @@ class Node:
             block = from_dict(block)
         if self.blockchain.add_block(block):
             # TODO remove transactions from pool that are in the block
+            print(f"Block {block.index} added to the chain.")
             return True
         return False
     
@@ -49,6 +50,15 @@ class Node:
         # Implement your code here
         return True
 
+    def get_random_voter_id(self):
+        """
+        A function to get a random voter ID.
+        This function will be called by the miner to get a random voter ID.
+        """
+        id = random.randint(100_000, 999_999)
+        while str(id) in self.blockchain.users:
+            id = random.randint(100_000, 999_999)
+        return str(id)
 
 
 class Miner(Node):

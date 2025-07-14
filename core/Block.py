@@ -41,7 +41,7 @@ class VoteBlock(Block):
     def __init__(self, index, timestamp, data, previous_hash):
         super().__init__(index, timestamp, data, previous_hash)
 
-    def verify_data(self, previous_blocks):
+    def verify_data(self, previous_blocks, users):
         """
         Verify that the data in the block is valid.
         Checking that each voter_id is unique across previous blocks to prevent duplicate voting.
@@ -87,17 +87,16 @@ class RegisterBlock(Block):
     def __init__(self, index, timestamp, data, previous_hash):
         super().__init__(index, timestamp, data, previous_hash)
 
-    def verify_data(self, previous_blocks):
+    def verify_data(self, previous_blocks, users):
         """
         Verify that the data in the block is valid.
         Checking that each voter_id is unique across previous blocks to prevent duplicate voting.
         Ensuring each transaction has valid formatting (contains required fields like voter_id and vote).
         """
         # Check for duplicate voter IDs
-        for block in previous_blocks:
-            if not isinstance(block, RegisterBlock): continue
-            if self.data['voter_id'] in block.data['voter_id']:
-                return False
+        if self.data['voter_id'] in users:
+            print("Duplicate voter ID.")
+            return False
         # Check for required fields
         if 'voter_id' not in self.data:
             return False
