@@ -21,7 +21,7 @@ class Blockchain:
     def create_genesis_block(self):
         """
         A function to generate the genesis block and appends it to
-        the chain. The block has index 0, previous_hash as 0, and
+        the chain. The block has index 0, previousHash as 0, and
         a valid hash.
         """
         genesis_block = Block(0, time.time(), "Genesis Block", "0")
@@ -31,7 +31,7 @@ class Blockchain:
         """
         A function to set the genesis block.
         """
-        if block.index != 0 or block.previous_hash != "0":
+        if block.index != 0 or block.previousHash != "0":
             print("Invalid genesis block.")
             return False
         if len(self.chain) == 0:
@@ -41,7 +41,7 @@ class Blockchain:
             self.chain[0] = block
             return True
         else:
-            if self.chain[1].previous_hash == block.hash:
+            if self.chain[1].previousHash == block.hash:
                 self.chain[0] = block
                 return True
             else:
@@ -52,12 +52,12 @@ class Blockchain:
         """
         A function that adds the block to the chain after verification.
         Verification includes:
-        * 1. Checking if the previous_hash refers to the hash of the latest block in the chain
+        * 1. Checking if the previousHash refers to the hash of the latest block in the chain
         * 2. Recalculate and validate block hash
         * 3. Verify transactions: Ensure all are legitimate (e.g., unique voter IDs, correct format
         """
-        previous_hash = self.chain[-1].hash 
-        if previous_hash != block.previous_hash: #* 1
+        previousHash = self.chain[-1].hash 
+        if previousHash != block.previousHash: #* 1
             print("Invalid previous hash.")
             return False
         if not self.is_valid_hash(block): #* 2

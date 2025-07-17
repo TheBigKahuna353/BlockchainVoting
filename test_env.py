@@ -8,7 +8,7 @@ def test_block():
     assert block.index == 0
     assert block.timestamp is not None
     assert block.data == "Genesis Block"
-    assert block.previous_hash == "0"
+    assert block.previousHash == "0"
     assert block.hash is not None
     assert block.nonce == 0
     assert block.hash_block() == block.hash
@@ -19,7 +19,7 @@ def test_blockchain():
     assert len(blockchain.chain) == 1
     assert blockchain.chain[0].index == 0
     assert blockchain.chain[0].data == "Genesis Block"
-    assert blockchain.chain[0].previous_hash == "0"
+    assert blockchain.chain[0].previousHash == "0"
     assert blockchain.chain[0].hash is not None
     assert blockchain.chain[0].nonce == 0
     assert blockchain.chain[0].hash_block() == blockchain.chain[0].hash

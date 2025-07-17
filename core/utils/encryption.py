@@ -1,107 +1,90 @@
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-import hashlib
-import sys
-
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.exceptions import InvalidSignature
 from mnemonic import Mnemonic
 
+# ------------------------
+# Key Pair Generation
+# ------------------------
+
 def generate_key_pair():
-    """
-    returns a tuple of private key and public key
-    """
     private_key = ec.generate_private_key(ec.SECP256K1())
     public_key = private_key.public_key()
 
-    # Serialize keys if you want to store them
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
+    # Get 32-byte private key as hex
+    private_int = private_key.private_numbers().private_value
+    private_hex = private_int.to_bytes(32, byteorder='big').hex()
+
+    # Get public key in uncompressed form (0x04 + X + Y)
+    public_bytes = public_key.public_bytes(
+        encoding=serialization.Encoding.X962,
+        format=serialization.PublicFormat.UncompressedPoint
     )
+    public_hex = public_bytes.hex()
 
-    public_key_pem = public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    )
+    return private_hex, public_hex
 
-    return private_key_pem, public_key_pem
+# ------------------------
+# Sign / Verify
+# ------------------------
 
-def sign_data(private_key, data):
-    private_key = serialization.load_pem_private_key(private_key, password=None)
+def sign_data(private_hex: str, data: str) -> str:
+    # Convert back to private key object
+    private_int = int(private_hex, 16)
+    private_key = ec.derive_private_key(private_int, ec.SECP256K1())
+
     signature = private_key.sign(
-        data.encode(),
+        data.encode('utf-8'),
         ec.ECDSA(hashes.SHA256())
     )
-    return signature
+    return signature.hex()
 
-def verify_signature(public_key, signature, data):
-    public_key = serialization.load_pem_public_key(public_key)
+def verify_signature(public_hex: str, signature_hex: str, data: str) -> bool:
     try:
+        public_bytes = bytes.fromhex(public_hex)
+        signature_bytes = bytes.fromhex(signature_hex)
+
+        public_key = ec.EllipticCurvePublicKey.from_encoded_point(ec.SECP256K1(), public_bytes)
+
         public_key.verify(
-            signature,
-            data.encode(),
+            signature_bytes,
+            data.encode('utf-8'),
             ec.ECDSA(hashes.SHA256())
         )
         return True
-    except:
+    except InvalidSignature:
+        return False
+    except Exception as e:
+        print(f"Verification error: {e}")
         return False
 
-def _extract_private_key_bytes(private_key_pem):
-    """
-    Extracts the 32-byte private key from the PEM-encoded private key.
-    """
-    # Load the PEM private key
-    private_key = serialization.load_pem_private_key(private_key_pem, password=None)
-    
-    # Extract the private key as a number (this will be 32 bytes in the case of SECP256K1)
-    private_key_bytes = private_key.private_numbers().private_value.to_bytes(32, byteorder='big')
-    
-    return private_key_bytes
+# ------------------------
+# Mnemonic Support
+# ------------------------
 
-def _get_private_key_from_bytes(private_key_bytes):
-    """
-    Returns a PEM-encoded private key from the 32-byte private key.
-    """
-    # Load the private key from the bytes
-    private_key = ec.derive_private_key(int.from_bytes(private_key_bytes, byteorder='big'), ec.SECP256K1())
-    
-    # Serialize the private key
-    private_key_pem = private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.PKCS8,
-        encryption_algorithm=serialization.NoEncryption()
-    )
-    
-    return private_key_pem
+def key_to_mnemonic(private_hex: str) -> str:
+    private_bytes = bytes.fromhex(private_hex)
+    return Mnemonic("english").to_mnemonic(private_bytes)
 
-def key_to_mnemonic(key):
-    bytes = _extract_private_key_bytes(key)
-    return Mnemonic("english").to_mnemonic(bytes)
+def mnemonic_to_private_key(mnemonic: str) -> str:
+    private_bytes = Mnemonic("english").to_entropy(mnemonic)
+    return private_bytes.hex()
 
-def mnemonic_to_private_key(mnemonic):
-    bytes =  Mnemonic("english").to_entropy(mnemonic)
-    return _get_private_key_from_bytes(bytes)
+# ------------------------
+# Test Example
+# ------------------------
 
-def _test_mnemonic():
-    private, _ = generate_key_pair()
-    print(private)
-    mnemonic = key_to_mnemonic(private)
-    print(mnemonic)
-    key2 = mnemonic_to_private_key(mnemonic)
-    print(key2)
-    print(private == key2)
+def _test():
+    priv, pub = generate_key_pair()
+    print("Private:", priv)
+    print("Public :", pub)
 
-def _test_signature():
-    private, public = generate_key_pair()
-    data = "Hello, World!"
-    signature = sign_data(private, data)
-    print("Signature:", signature)
-    assert verify_signature(public, signature, data)
-    print("Signature verified successfully.")
+    msg = "vote:Alice"
+    sig = sign_data(priv, msg)
+    print("Signature:", sig)
+
+    ok = verify_signature(pub, sig, msg)
+    print("Signature valid?", ok)
 
 if __name__ == "__main__":
-    # _test_mnemonic()
-    # Uncomment the following line to test signature generation and verification
-    _test_signature()
+    _test()

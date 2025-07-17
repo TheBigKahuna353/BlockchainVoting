@@ -63,12 +63,12 @@ starting_block_dict = {
     'index': 0, 
     'timestamp': 1730291248.4442232, 
     'data': {"voter_id": "0", "vote": "A"}, 
-    'previous_hash': '0', 
+    'previousHash': '0', 
     'nonce': 0, 
     'hash': '3c379288510f21b3f4fe2a6f39bc44013391744fbe4fbcd8cc3d89133208b668'}
 
-starting_block = from_dict(starting_block_dict)
-miner.blockchain.set_genesis_block(starting_block)
+# starting_block = from_dict(starting_block_dict)
+# miner.blockchain.set_genesis_block(starting_block)
 
 if not p2p.server_connected:
     print("Failed to connect to the seed node.")
@@ -128,20 +128,17 @@ def main_menu():
     app.text(f"Blockchain len: {length}", 600, 150)
 
     if voter_id != 0 and button.update():
-        print(voter_id)
         miner.add_transaction(create_transaction(str(voter_id), "A"))
         print(miner.mine())
         print(sys.getsizeof(miner.blockchain.chain))
-        print(miner.blockchain.to_dict())
 
     if button2.update():
         state = "register"
         private_key, public_key = generate_key_pair()
         voter_id = miner.get_random_voter_id()
         mnemonic = key_to_mnemonic(private_key)
-        print(public_key.decode())
-        txtBox.set_text(str(public_key.decode()))
-        txtBox2.set_text(str(private_key.decode()))
+        txtBox.set_text(str(public_key.encode()))
+        txtBox2.set_text(str(private_key.encode()))
         txtBox3.set_text(str(mnemonic))
         miner.add_transaction(create_register_transaction(str(voter_id), public_key))
         miner.mine()

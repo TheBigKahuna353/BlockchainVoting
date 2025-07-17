@@ -1,21 +1,23 @@
 import hashlib as hasher
 from core.utils.encryption import verify_signature
+import json
 
 class Block:
-    def __init__(self, index, timestamp, data, previous_hash):
+    def __init__(self, index, timestamp, data, previousHash):
         self.index = index
         self.timestamp = timestamp
         self.data = data
-        self.previous_hash = previous_hash
+        self.previousHash = previousHash
         self.nonce = 0
         self.hash = self.hash_block()
 
     def hash_block(self):
         sha = hasher.sha256()
+        data = json.dumps(self.data, sort_keys=True, separators=(',', ':')) # Convert data to JSON string
         sha.update(str(self.index).encode('utf-8') +
                    str(self.timestamp).encode('utf-8') +
-                   str(self.data).encode('utf-8') +
-                   str(self.previous_hash).encode('utf-8') +
+                   str(data).encode('utf-8') +
+                   str(self.previousHash).encode('utf-8') +
                    str(self.nonce).encode('utf-8')) # Add nonce
         return sha.hexdigest()
     
@@ -38,8 +40,8 @@ class VoteBlock(Block):
     }
     """
 
-    def __init__(self, index, timestamp, data, previous_hash):
-        super().__init__(index, timestamp, data, previous_hash)
+    def __init__(self, index, timestamp, data, previousHash):
+        super().__init__(index, timestamp, data, previousHash)
 
     def verify_data(self, previous_blocks, users):
         """
@@ -54,6 +56,7 @@ class VoteBlock(Block):
         for block in previous_blocks:
             if block.index == 0: continue   # Skip the genesis block
             if isinstance(block, VoteBlock):
+                print(self.data, block.data)
                 if self.data['voter_id'] in block.data['voter_id']:
                     print("Duplicate voter ID.")
                     return False
@@ -84,14 +87,14 @@ class RegisterBlock(Block):
     }
     """
 
-    def __init__(self, index, timestamp, data, previous_hash):
-        super().__init__(index, timestamp, data, previous_hash)
+    def __init__(self, index, timestamp, data, previousHash):
+        super().__init__(index, timestamp, data, previousHash)
 
     def verify_data(self, previous_blocks, users):
         """
         Verify that the data in the block is valid.
         Checking that each voter_id is unique across previous blocks to prevent duplicate voting.
-        Ensuring each transaction has valid formatting (contains required fields like voter_id and vote).
+        Ensuring each transaction has valid formatting (contains required fields like voter_id and public key).
         """
         # Check for duplicate voter IDs
         if self.data['voter_id'] in users:
@@ -100,6 +103,8 @@ class RegisterBlock(Block):
         # Check for required fields
         if 'voter_id' not in self.data:
             return False
+        if 'public_key' not in self.data:
+            return False
         return True
 
 def to_dict(block):
@@ -107,16 +112,20 @@ def to_dict(block):
         "index": block.index,
         "timestamp": block.timestamp,
         "data": block.data,
-        "previous_hash": block.previous_hash,
+        "previousHash": block.previousHash,
         "nonce": block.nonce,
-        "hash": block.hash
+        "hash": block.hash,
+        "type": "vote" if isinstance(block, VoteBlock) else "register"
     }
 
 def from_dict(block_dict):
-    if "vote" in block_dict["data"]:
-        block = VoteBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previous_hash"])
+    print(f"Creating block from dict: {block_dict}")
+    if block_dict["type"] == "vote":
+        block = VoteBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previousHash"])
+    elif block_dict["type"] == "register":
+        block = RegisterBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previousHash"])
     else:
-        block = RegisterBlock(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previous_hash"])
+        block = Block(block_dict["index"], block_dict["timestamp"], block_dict["data"], block_dict["previousHash"])
     block.nonce = block_dict["nonce"]
     block.hash = block_dict["hash"]
     return block

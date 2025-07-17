@@ -72,11 +72,11 @@ class Miner(Node):
         This function will be called by the miner to mine a new block.
         """
         transaction = self.transaction_pool.pop(0)
-        previous_hash = self.blockchain.chain[-1].hash
+        previousHash = self.blockchain.chain[-1].hash
         if transaction["type"] == "vote":
-            block = VoteBlock(len(self.blockchain), time.time(), transaction, previous_hash)
+            block = VoteBlock(len(self.blockchain), time.time(), transaction, previousHash)
         elif transaction["type"] == "register":
-            block = RegisterBlock(len(self.blockchain), time.time(), transaction, previous_hash)
+            block = RegisterBlock(len(self.blockchain), time.time(), transaction, previousHash)
         else:
             return False
         
@@ -88,6 +88,7 @@ class Miner(Node):
         if self.add_block(block):
             # Broadcast block to peers
             if self.p2p:
+                print(f"Broadcasting block {block.index} to peers.")
                 if not self.p2p.broadcast_block(to_dict(block)):
                     # If broadcast fails, remove block from chain
                     self.blockchain.chain.pop()

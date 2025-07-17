@@ -3,10 +3,12 @@ import socketio
 import threading
 from gevent import pywsgi
 from socketio.exceptions import ConnectionError
+import json
+from core.Block import to_dict, from_dict
 
 class P2P:
 
-    seed_node = 5000 # for development purposes, it is only the port number
+    seed_node = 4941 # for development purposes, it is only the port number
 
     def __init__(self, port, node=None):
         """
@@ -38,6 +40,8 @@ class P2P:
         
         @self.server.event
         def receive_block(sid, block_data):
+            # block data is in json format
+            block_data = json.loads(block_data)
             print(f'SERVER: {self.port}: Received new block: {block_data}')
             # Logic to validate and add block to chain goes here
             if self.node:
@@ -48,7 +52,8 @@ class P2P:
         def connect_to_network(sid, port):
             print(f'SERVER: {self.port}: Node connected to network: {port}')
             self.share_peers(port)
-            self.peer_nodes.append(port)
+            if port not in self.peer_nodes:
+                self.peer_nodes.append(port)
             return self.peer_nodes[:-1], self.node.blockchain.to_dict() if self.node else None
         
         @self.server.event
@@ -63,8 +68,11 @@ class P2P:
         # ----------------------------------------------------------------
 
         # Start the server on a separate thread
-        thread = threading.Thread(target=self.start_server)
+        thread = threading.Thread(target=self.start_server, daemon=True)
         thread.start()
+
+        # Give the server a moment to start
+        time.sleep(0.1)
 
         if port != self.seed_node:
             self.peer_nodes.append(self.seed_node)
@@ -84,9 +92,13 @@ class P2P:
     
     def stop_server(self):
         # Stop the server
-        if self._server:
-            self._server.stop()
         self.server_connected = False
+        if self._server:
+            try:
+                self._server.stop()
+                self._server = None
+            except Exception as e:
+                print(f"Error stopping server: {e}")
         print(f"Server stopped on port {self.port}")
     
     # On Seperate Thread ---------------------------------------------
@@ -97,6 +109,12 @@ class P2P:
             print(f"Server started on port {self.port}")
             self.server_connected = True
             self._server.serve_forever()
+        except OSError as e:
+            if "Address already in use" in str(e):
+                print(f"Port {self.port} is already in use. Try a different port.")
+            else:
+                print(f"Failed to start server on port {self.port}: {e}")
+            self.stop_server()
         except Exception as e:
             print(f"Failed to start server on port {self.port}: {e}")
             self.stop_server()
@@ -104,10 +122,11 @@ class P2P:
     
     def broadcast_block(self, block_data):
         # Connect to each peer and send the block data
+        block_data = json.dumps(block_data, sort_keys=True, separators=(',', ':'))
         for node_address in self.peer_nodes:
             passed = self.send_to(node_address, 'receive_block', block_data)
             if passed != "Accepted" and passed != True:
-                print(f"Failed to send block to {node_address}: {passed}, {type(passed)}")
+                print(f"Failed to send block to {node_address}: {passed}")
                 return False
         return True
                 
@@ -125,6 +144,7 @@ class P2P:
         if self.node:
             self.node.blockchain.from_dict(chain)
             print(f"Blockchain synced with network: {len(self.node.blockchain)}")
+            print(f"genesis block: {to_dict(self.node.blockchain.chain[0])}")
         self.client_connected = False
 
     def connect_to_network(self):
@@ -132,7 +152,7 @@ class P2P:
         print(f"Connecting to seed node: {self.seed_node}")
         try:
             self.client_connected = True
-            self.client.connect(f'http://localhost:{self.seed_node}')
+            self.client.connect(f'https://webserver-aekg.onrender.com:10000')
             self.client.emit('connect_to_network', self.port, callback=self.connecting_callback)
             while self.client_connected: pass
             self.client.disconnect()
